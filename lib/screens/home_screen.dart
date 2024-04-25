@@ -1,6 +1,7 @@
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'dart:developer' as dev;
 
@@ -13,7 +14,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final FlutterTts _flutterTts = FlutterTts();
   final TextEditingController _editingController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
@@ -22,11 +23,43 @@ class _HomeScreenState extends State<HomeScreen> {
   int? _currentWordStart;
   int? _currentWordEnd;
   double _voicePitch = 1.0;
+  bool _isTextCopied = false;
 
   @override
   void initState() {
     super.initState();
     getVoice();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _checkClipboard();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _checkClipboard();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
+  // }
+
+  Future<void> _checkClipboard() async {
+    var clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+    var clipboardText = clipboardData?.text;
+    setState(() {
+      _isTextCopied = clipboardText != null && clipboardText.isNotEmpty;
+    });
   }
 
   void getVoice() {
@@ -65,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void startSpeak() {
     _flutterTts.setPitch(_voicePitch);
+    dev.log("this is curret voice: $_currentVoice");
     _flutterTts.speak(Constants.ttsInput);
   }
 
@@ -157,7 +191,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.white70),
                       ),
                   ])),
-          const SizedBox(height: 50),
+          const SizedBox(height: 20),
+          OutlinedButton(
+              onPressed: !_isTextCopied ? null : () => onPasteClick(),
+              child: const Text("Replace above text by pasting copied text!")),
+          // const SizedBox(height: 50),
           IconButton(
               onPressed: changeReadingText,
               icon: const Row(
@@ -187,6 +225,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     ));
+  }
+
+  void onPasteClick() async {
+    var clipBoardData = await Clipboard.getData(Clipboard.kTextPlain);
+    var clipboardText = clipBoardData?.text;
+    Constants.ttsInput = clipboardText ?? 'Sorry!, nothing to paste.';
+    await Clipboard.setData(const ClipboardData(text: ''));
+    _isTextCopied = false;
+    setState(() {});
   }
 
   Widget _speakerSelector() {
@@ -294,10 +341,12 @@ class _HomeScreenState extends State<HomeScreen> {
           child: StatefulBuilder(
             builder: (context, changeState) {
               if (_searchController.text.isNotEmpty) {
-                oldVoices = oldVoices.where((element) {
+                oldVoices = _voices.where((element) {
                   if (element.containsKey('name')) {
                     return element['name'].contains(_searchController.text) ||
-                        element['locale'].contains(_searchController.text);
+                        element['locale'].contains(_searchController.text) ||
+                        element.keys.contains(_searchController.text) ||
+                        element.values.contains(_searchController.text);
                   } else {
                     return false;
                   }
@@ -310,9 +359,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: TextField(
                       controller: _searchController,
                       onChanged: (value) {
-                        if (value.isEmpty) {
-                          oldVoices = _voices;
-                        }
                         changeState(() {});
                       },
                       decoration: InputDecoration(
