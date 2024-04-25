@@ -52,6 +52,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // @override
   // void didChangeDependencies() {
   //   super.didChangeDependencies();
+  //   getVoice();
+  //   WidgetsBinding.instance.addObserver(this);
+  //   WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+  //     _checkClipboard();
+  //   });
   // }
 
   Future<void> _checkClipboard() async {
@@ -144,10 +149,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         children: [
           Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _speakerSelector(),
               IconButton(
-                  onPressed: searchByLangCode, icon: const Icon(Icons.search))
+                  onPressed: searchByLangCode,
+                  icon: const Icon(Icons.manage_search))
             ],
           ),
           const SizedBox(height: 50),
