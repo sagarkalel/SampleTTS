@@ -96,15 +96,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void stopTts() {
-    _flutterTts.stop();
-    _currentWordEnd = _currentWordStart = null;
-    setState(() {});
+    try {
+      _flutterTts.stop();
+      _currentWordEnd = _currentWordStart = null;
+      setState(() {});
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Something went wrong, please try again!")));
+    }
   }
 
   void startSpeak() {
-    _flutterTts.setPitch(_voicePitch);
-    dev.log("this is curret voice: $_currentVoice");
-    _flutterTts.speak(Constants.ttsInput);
+    try {
+      _flutterTts.setPitch(_voicePitch);
+      dev.log("this is curret voice: $_currentVoice");
+      _flutterTts.speak(Constants.ttsInput);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Something went wrong, please try again!")));
+    }
   }
 
   @override
