@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   flutter_tts: ^3.6.3
   avatar_glow: ^3.0.1
+  http: ^1.2.1
 
 dev_dependencies:
   flutter_test:
